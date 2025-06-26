@@ -5,20 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import '../App.css';
 import '../index.css';
-import './ButtonTry.css'
+import './ButtonTry.css';
+
 function EmailVerification() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(true); // Modal is open by default
   const [otp, setOtp] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const inputsRef = useRef([]); // For OTP inputs
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const navigate = useNavigate();
-
-  // Toggles the OTP Modal
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
-  };
 
   // Handles the form submission for sending OTP
   const handleEmailSubmit = async (e) => {
@@ -34,7 +30,7 @@ function EmailVerification() {
     }
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/send-otp`, { email, phone }); // Updated to send both `email` and `phone`
+      const response = await axios.post(`http://otp.quantasip.com/send-otp`, { email, phone }); // Updated to send both `email` and `phone`
       toast.success('OTP sent successfully to your email!');
       console.log('OTP sent:', response.data);
     } catch (error) {
@@ -57,7 +53,7 @@ function EmailVerification() {
     }
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/verify-otp`, {
+      const response = await axios.post(`http://otp.quantasip.com/verify-otp`, {
         email,
         otp: otpValue,
       });
@@ -110,17 +106,6 @@ function EmailVerification() {
   return (
     <>
       <ToastContainer />
-      <div className="center-button-container">
-  <button
-    onClick={toggleModal}
-    className="block text-white bg-gray-500 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-    type="button"
-  >
-    Try it
-  </button>
-</div>
-
-
       {isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50"
@@ -130,28 +115,6 @@ function EmailVerification() {
             <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
               <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                 <h1 className="text-2xl font-bold mb-1">Verify Your Email and Phone Number</h1>
-                <button
-                  onClick={toggleModal}
-                  type="button"
-                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                >
-                  <svg
-                    className="w-3 h-3"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 14 14"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                    />
-                  </svg>
-                  <span className="sr-only">Close modal</span>
-                </button>
               </div>
               <div className="p-4 md:p-5">
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
