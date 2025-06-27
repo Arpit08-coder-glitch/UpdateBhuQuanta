@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import EmailVerification from './components/UI/EmailVerification';
-import MapComponent from './components/UI/MapComponent';
+import EmailVerification from './EmailVerification';
+import MapComponent from './MapComponent';
 
 function App() {
   return (
@@ -15,4 +15,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; 
