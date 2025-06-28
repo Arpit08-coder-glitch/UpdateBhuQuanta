@@ -16,7 +16,7 @@ const FeaturePanel = ({
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Property Details
+          Details
         </h2>
       </div>
 
@@ -31,7 +31,7 @@ const FeaturePanel = ({
                 <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Property Information
+                Details
               </h3>
               <div className="space-y-3">
                 {featureDetails.length > 0 ? (
@@ -52,8 +52,8 @@ const FeaturePanel = ({
                     <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p className="text-gray-500 text-sm">No property details available</p>
-                    <p className="text-gray-400 text-xs mt-1">Select a property on the map to view details</p>
+                    <p className="text-gray-500 text-sm">No Khasra no. details available</p>
+                    <p className="text-gray-400 text-xs mt-1">Select a khasra no. on the map to view details</p>
                   </div>
                 )}
               </div>
@@ -98,9 +98,9 @@ const FeaturePanel = ({
               <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
               </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Property Selected</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Khasra no. selected</h3>
               <p className="text-gray-500 text-sm">
-                Click on the map or search for a property to view details
+                Click on the map or search for a Khasra no. to view details
               </p>
             </div>
           </div>

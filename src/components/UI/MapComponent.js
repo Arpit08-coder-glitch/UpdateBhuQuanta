@@ -53,6 +53,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Chhattisgarh": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Chhattisgarh',
@@ -60,6 +61,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Goa": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Goa',
@@ -67,6 +69,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Haryana": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Haryana',
@@ -74,6 +77,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Karnataka": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Karnataka',
@@ -81,6 +85,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "MadhyaPradesh": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:MadhyaPradesh',
@@ -88,6 +93,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Maharashtra": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Maharashtra',
@@ -95,6 +101,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Rajasthan": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Rajasthan',
@@ -102,6 +109,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "TamilNadu": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:TamilNadu',
@@ -109,6 +117,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "Telangana": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:Telangana',
@@ -116,6 +125,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
     "parsola": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
       layers: 'ne:parsola',
@@ -123,6 +133,7 @@ const MapComponent = () => {
       transparent: true,
       attribution: "© QuantaSIP",
       zIndex: 500,
+      maxZoom: 19,
     }),
   }), []);
 

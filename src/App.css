@@ -101,6 +101,7 @@ body {
   outline: none;
   border-color: #007bff;
 }
+
 #map {
   position: absolute;
   top: 0;
