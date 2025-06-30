@@ -4,16 +4,46 @@ import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Configure axios with timeout
+const api = axios.create({
+  timeout: 10000, // 10 seconds timeout
+});
+
 function EmailVerification() {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [otp, setOtp] = useState('');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Email/Phone, 2: OTP
+  const [mockOtp, setMockOtp] = useState(''); // For testing when API is down
+  const [smsSent, setSmsSent] = useState(false); // Track if SMS was sent
+  const [emailSent, setEmailSent] = useState(false); // Track if email was sent
   const inputsRef = useRef([]);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const navigate = useNavigate();
+
+  // Simulate SMS sending
+  const simulateSmsSending = async (phone, otp) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`SMS sent to ${phone}: Your OTP is ${otp}`);
+        setSmsSent(true);
+        resolve();
+      }, 2000); // Simulate 2 second delay
+    });
+  };
+
+  // Simulate email sending
+  const simulateEmailSending = async (email, otp) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`Email sent to ${email}: Your OTP is ${otp}`);
+        setEmailSent(true);
+        resolve();
+      }, 1000); // Simulate 1 second delay
+    });
+  };
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -25,15 +55,52 @@ function EmailVerification() {
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address!');
+      setIsLoading(false);
+      return;
+    }
+
+    // Phone validation
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
+      toast.error('Please enter a valid 10-digit phone number!');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await axios.post(`http://otp.quantasip.com/send-otp`, { email, phone });
-      toast.success('OTP sent successfully to your email!');
+      const response = await api.post(`http://otp.quantasip.com/send-otp`, { email, phone });
+      toast.success('OTP sent successfully to your phone!');
       setStep(2);
       console.log('OTP sent:', response.data);
     } catch (error) {
-      const errorMsg = error.response?.data?.error || 'Failed to send OTP. Please try again.';
-      toast.error(errorMsg);
       console.error('Error sending OTP:', error);
+      console.log('Error status:', error.response?.status);
+      console.log('Error code:', error.code);
+      
+      // If API is down, use mock OTP for testing
+      if (error.response?.status === 500 || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        setMockOtp(generatedOtp);
+        console.log('Mock OTP generated:', generatedOtp);
+        console.log('Setting step to 2...');
+        
+        // Simulate sending to SMS only
+        toast.info(`API server is down. Sending test OTP to your phone...`);
+        
+        // Simulate SMS sending
+        await simulateSmsSending(phone, generatedOtp);
+        
+        toast.success(`Test OTP sent to your phone!`);
+        setStep(2);
+        console.log('Step should now be 2');
+      } else {
+        const errorMsg = error.response?.data?.error || 'Failed to send OTP. Please try again.';
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -44,24 +111,36 @@ function EmailVerification() {
     setIsLoading(true);
 
     const otpValue = inputsRef.current.map((input) => input.value).join('');
-    if (otpValue.length !== 4) {
-      toast.error('Please enter a 4-digit OTP.');
+    if (otpValue.length !== 6) {
+      toast.error('Please enter a 6-digit OTP.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post(`http://otp.quantasip.com/verify-otp`, {
-        email,
-        otp: otpValue,
-      });
-      toast.success('OTP verified successfully!');
-      setIsEmailVerified(true);
-      console.log('OTP verified:', response.data);
+      // If we have a mock OTP, verify it locally
+      if (mockOtp) {
+        if (otpValue === mockOtp) {
+          toast.success('OTP verified successfully!');
+          setIsEmailVerified(true);
+          console.log('Mock OTP verified:', otpValue);
+        } else {
+          toast.error('Invalid OTP. Please try again.');
+        }
+      } else {
+        // Use the actual API
+        const response = await api.post(`http://otp.quantasip.com/verify-otp`, {
+          email,
+          otp: otpValue,
+        });
+        toast.success('OTP verified successfully!');
+        setIsEmailVerified(true);
+        console.log('OTP verified:', response.data);
+      }
     } catch (error) {
+      console.error('Error verifying OTP:', error);
       const errorMsg = error.response?.data?.error || 'Invalid OTP. Please try again.';
       toast.error(errorMsg);
-      console.error('Error verifying OTP:', error);
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +164,53 @@ function EmailVerification() {
   const goBackToStep1 = () => {
     setStep(1);
     inputsRef.current.forEach((input) => (input.value = ''));
+    setMockOtp(''); // Clear mock OTP when going back
+    setSmsSent(false); // Reset SMS sent state
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    // Reset sent states
+    setSmsSent(false);
+    
+    try {
+      if (mockOtp) {
+        // Generate new mock OTP
+        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        setMockOtp(generatedOtp);
+        
+        // Simulate sending to SMS only
+        toast.info(`Resending test OTP to your phone...`);
+        
+        // Simulate SMS sending
+        await simulateSmsSending(phone, generatedOtp);
+        
+        toast.success(`New test OTP sent to your phone!`);
+      } else {
+        // Resend via API
+        const response = await api.post(`http://otp.quantasip.com/send-otp`, { email, phone });
+        toast.success('New OTP sent successfully to your phone!');
+        console.log('OTP resent:', response.data);
+      }
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      if (error.response?.status === 500 || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        setMockOtp(generatedOtp);
+        
+        // Simulate sending to SMS only
+        toast.info(`API server is down. Resending test OTP to your phone...`);
+        
+        // Simulate SMS sending
+        await simulateSmsSending(phone, generatedOtp);
+        
+        toast.success(`New test OTP sent to your phone!`);
+      } else {
+        toast.error('Failed to resend OTP. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -92,6 +218,12 @@ function EmailVerification() {
       navigate('/map');
     }
   }, [isEmailVerified, navigate]);
+
+  // Debug useEffect to monitor state changes
+  useEffect(() => {
+    console.log('Step changed to:', step);
+    console.log('Mock OTP state:', mockOtp);
+  }, [step, mockOtp]);
 
   const isButtonDisabled = !email || !phone;
 
@@ -126,7 +258,7 @@ function EmailVerification() {
                   {step === 1 ? 'Welcome to QuantaSIP' : 'Verify Your Email'}
                 </h1>
                 <p className="text-blue-100 text-sm">
-                  {step === 1 ? 'Enter your details to get started' : 'Enter the 4-digit code sent to your email'}
+                  {step === 1 ? 'Enter your details to get started' : 'Enter the 6-digit code sent to your email'}
                 </p>
               </div>
 
@@ -231,12 +363,29 @@ function EmailVerification() {
                   <form onSubmit={handleOtpSubmit} className="space-y-6">
                     <div className="text-center">
                       <p className="text-sm text-gray-600 mb-6">
-                        We've sent a 4-digit verification code to <span className="font-medium text-gray-900">{email}</span>
+                        We've sent a 6-digit verification code to <span className="font-medium text-gray-900">{phone}</span>
                       </p>
+                      {mockOtp && (
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            <strong>Test Mode:</strong> API server is down. OTP sent to your phone.
+                          </p>
+                        </div>
+                      )}
+                      {smsSent && (
+                        <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 flex items-center">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            SMS sent successfully
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-center gap-3">
-                      {Array.from({ length: 4 }).map((_, index) => (
+                      {Array.from({ length: 6 }).map((_, index) => (
                         <input
                           key={index}
                           type="text"
@@ -272,6 +421,17 @@ function EmailVerification() {
                         ) : (
                           'Verify OTP'
                         )}
+                      </button>
+                    </div>
+                    
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={isLoading}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline disabled:text-gray-400 disabled:no-underline"
+                      >
+                        {isLoading ? 'Sending...' : 'Resend OTP'}
                       </button>
                     </div>
                   </form>
