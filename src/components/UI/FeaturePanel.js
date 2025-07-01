@@ -9,7 +9,7 @@ const FeaturePanel = ({
   showFeatureButtons = false
 }) => {
   return (
-    <div className="w-80 h-full bg-white shadow-xl border-l border-gray-200 flex flex-col">
+    <div className="fixed top-0 right-0 h-screen w-80 bg-white shadow-xl border-l border-gray-200 flex flex-col z-40">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
         <h2 className="text-white text-lg font-semibold flex items-center">

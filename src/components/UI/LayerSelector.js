@@ -19,14 +19,14 @@ const LayerSelector = ({
   onSubmit
 }) => {
   return (
-    <div className="w-80 h-full bg-white shadow-xl border-r border-gray-200 flex flex-col">
+    <div className="fixed top-0 left-0 h-screen w-80 bg-white shadow-xl border-r border-gray-200 flex flex-col z-40">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
         <h2 className="text-white text-lg font-semibold flex items-center">
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
           </svg>
-          Layer Selection
+          Select Below
         </h2>
       </div>
 
@@ -38,7 +38,7 @@ const LayerSelector = ({
             <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            Select State Layer
+            Select State
           </h3>
           <div className="space-y-2">
             {Object.keys(wmsLayers).map((state) => (

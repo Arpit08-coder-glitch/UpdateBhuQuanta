@@ -17,7 +17,6 @@ const MapContainer = ({
       onMapClick(event);
     }
   }, [onMapClick]);
-
   useEffect(() => {
     // Check if map already exists to prevent re-initialization
     if (mapInstance.current) {
@@ -27,6 +26,9 @@ const MapContainer = ({
     // Initialize the map
     const map = L.map(mapRef.current).setView([20.5937, 78.9629], 5); // Centered in India
     mapInstance.current = map; // Save the map instance
+
+    // Set the attribution prefix to the Indian flag image and 'India'
+    map.attributionControl.setPrefix('<img src="/india-flag.png" alt="India Flag" style="height:16px;vertical-align:middle;margin-right:4px;display:inline;"/>India');
 
     // Define different base layers
     const osmLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {

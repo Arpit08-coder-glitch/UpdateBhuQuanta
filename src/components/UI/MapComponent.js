@@ -489,7 +489,7 @@ const MapComponent = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-100 flex">
+    <div className="h-screen w-screen flex overflow-hidden">
       {/* Left Sidebar - Layer Selector */}
       <LayerSelector
         wmsLayers={wmsLayers}
@@ -515,13 +515,15 @@ const MapComponent = () => {
       />
 
       {/* Center - Map Container */}
-      <MapContainer
-        onMapClick={handleMapClick}
-        selectedLayer={selectedLayer}
-        wmsLayers={wmsLayers}
-        currentPolygonLayer={currentPolygonLayer}
-        mapInstance={mapInstance}
-      />
+      <div className="flex-1 h-screen overflow-auto ml-80 mr-80">
+        <MapContainer
+          onMapClick={handleMapClick}
+          selectedLayer={selectedLayer}
+          wmsLayers={wmsLayers}
+          currentPolygonLayer={currentPolygonLayer}
+          mapInstance={mapInstance}
+        />
+      </div>
 
       {/* Right Sidebar - Feature Panel */}
       <FeaturePanel

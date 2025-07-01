@@ -3,12 +3,10 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
-
 // Configure axios with timeout
 const api = axios.create({
   timeout: 10000, // 10 seconds timeout
 });
-
 function EmailVerification() {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [otp, setOtp] = useState('');
@@ -255,10 +253,10 @@ function EmailVerification() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">
-                  {step === 1 ? 'Welcome to QuantaSIP' : 'Verify Your Email'}
+                  {step === 1 ? 'Welcome to QuantaSIP' : 'Verify Your Phone'}
                 </h1>
                 <p className="text-blue-100 text-sm">
-                  {step === 1 ? 'Enter your details to get started' : 'Enter the 6-digit code sent to your email'}
+                  {step === 1 ? 'Enter your details to get started' : 'Enter the 6-digit code sent to your phone'}
                 </p>
               </div>
 
@@ -266,22 +264,16 @@ function EmailVerification() {
               <div className="px-6 py-4 bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                       1
                     </div>
                     <span className="ml-2 text-sm font-medium">Details</span>
                   </div>
                   <div className="flex-1 h-0.5 bg-gray-200 mx-4">
-                    <div className={`h-full transition-all duration-300 ${
-                      step >= 2 ? 'bg-blue-600' : 'bg-gray-200'
-                    }`} style={{ width: step >= 2 ? '100%' : '0%' }}></div>
+                    <div className={`h-full transition-all duration-300 ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} style={{ width: step >= 2 ? '100%' : '0%' }}></div>
                   </div>
                   <div className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                       2
                     </div>
                     <span className="ml-2 text-sm font-medium">Verify</span>
@@ -340,11 +332,7 @@ function EmailVerification() {
                     <button
                       type="submit"
                       disabled={isButtonDisabled || isLoading}
-                      className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 ${
-                        isButtonDisabled || isLoading
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 shadow-lg'
-                      }`}
+                      className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 ${isButtonDisabled || isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 shadow-lg'}`}
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center">
