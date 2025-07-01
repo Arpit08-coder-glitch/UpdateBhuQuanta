@@ -83,16 +83,13 @@ function EmailVerification() {
       if (error.response?.status === 500 || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
         const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
         setMockOtp(generatedOtp);
-        console.log('Mock OTP generated:', generatedOtp);
-        console.log('Setting step to 2...');
-        
-        // Simulate sending to SMS only
-        toast.info(`API server is down. Sending test OTP to your phone...`);
-        
-        // Simulate SMS sending
         await simulateSmsSending(phone, generatedOtp);
-        
-        toast.success(`Test OTP sent to your phone!`);
+        toast.success(
+          <span>
+            Test OTP sent to your phone!<br />
+            <b>OTP: {generatedOtp}</b>
+          </span>
+        );
         setStep(2);
         console.log('Step should now be 2');
       } else {
