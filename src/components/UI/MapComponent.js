@@ -22,244 +22,134 @@ import {
   zoomToBounds 
 } from '../utils/mapUtils';
 
+// --- Constants and Configurations ---
+const EXCLUDED_PROPERTIES = [
+  "state_code", "distt_code", "teh_code", "block", "block_code", "lu_lc", "others", "remark", "u_id", "objectid_1"
+];
+const SOURCE_PROJ = "EPSG:32643";
+const TARGET_PROJ = "EPSG:4326";
+const MAP_PADDING = [50, 50];
+const WMS_LAYER_CONFIG = {
+  format: 'image/png',
+  transparent: true,
+  attribution: "© QuantaSIP",
+  zIndex: 500,
+  maxZoom: 19,
+};
+const LAYER_NAMES = [
+  "AndhraPradesh", "Chhattisgarh", "Goa", "Haryana", "Karnataka",
+  "MadhyaPradesh", "Maharashtra", "Rajasthan", "TamilNadu", "Telangana", "parsola"
+];
+
+// --- Utility Functions ---
+const processFeatureProperties = (properties) => {
+  return Object.entries(properties)
+    .filter(([key]) => !EXCLUDED_PROPERTIES.includes(key))
+    .map(([key, value]) => ({
+      label: key === "area_ac" ? "Area" : key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+      value: key === "area_ac" && !isNaN(value) ? parseFloat(value).toFixed(2) : value
+    }));
+};
+const createPolygonLayer = (geometry) => L.geoJSON(geometry, {
+  coordsToLatLng: (coords) => {
+    const [x, y] = proj4(SOURCE_PROJ, TARGET_PROJ, [coords[0], coords[1]]);
+    return L.latLng(y, x);
+  },
+});
+
 const MapComponent = () => {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
-  const [selectedLayer, setSelectedLayer] = useState(null);
-  const [featureDetails, setFeatureDetails] = useState([]);
-  const [showMessage, setShowMessage] = useState(false);
   const currentPolygonLayer = useRef(null);
-  const [districtOptions, setDistrictOptions] = useState([]);
-  const [tehsilOptions, setTehsilOptions] = useState([]);
-  const [villageOptions, setVillageOptions] = useState([]);
-  const [khasraOptions, setKhasraOptions] = useState([]);
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedTehsil, setSelectedTehsil] = useState('');
-  const [selectedVillage, setSelectedVillage] = useState('');
-  const [selectedKhasra, setSelectedKhasra] = useState('');
-  const [jsonData, setJsonData] = useState([]);
-  const [showPopup, setShowPopup] = useState(false);
-  const [matchingFeature, setMatchingFeature] = useState(null);
-  const [villageKhasraMap, setVillageKhasraMap] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showFeaturePanel, setShowFeaturePanel] = useState(false);
-  const [showFeatureButtons, setShowFeatureButtons] = useState(false);
+  const [state, setState] = useState({
+    selectedLayer: null,
+    featureDetails: [],
+    showMessage: false,
+    districtOptions: [],
+    tehsilOptions: [],
+    villageOptions: [],
+    khasraOptions: [],
+    selectedDistrict: '',
+    selectedTehsil: '',
+    selectedVillage: '',
+    selectedKhasra: '',
+    jsonData: [],
+    showPopup: false,
+    matchingFeature: null,
+    villageKhasraMap: {},
+    isLoading: false,
+    showFeaturePanel: false,
+    showFeatureButtons: false,
+  });
 
   // Define WMS layers
-  const wmsLayers = useMemo(() => ({
-    "AndhraPradesh": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:AndhraPradesh',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Chhattisgarh": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Chhattisgarh',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Goa": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Goa',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Haryana": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Haryana',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Karnataka": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Karnataka',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "MadhyaPradesh": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:MadhyaPradesh',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Maharashtra": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Maharashtra',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Rajasthan": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Rajasthan',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "TamilNadu": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:TamilNadu',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "Telangana": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:Telangana',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-    "parsola": L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-      layers: 'ne:parsola',
-      format: 'image/png',
-      transparent: true,
-      attribution: "© QuantaSIP",
-      zIndex: 500,
-      maxZoom: 19,
-    }),
-  }), []);
+  const wmsLayers = useMemo(() => {
+    const layers = {};
+    LAYER_NAMES.forEach(name => {
+      layers[name] = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        ...WMS_LAYER_CONFIG,
+        layers: `ne:${name}`,
+      });
+    });
+    return layers;
+  }, []);
 
   // Use custom hooks
-  useMapLayers(mapInstance, selectedLayer, wmsLayers);
+  useMapLayers(mapInstance, state.selectedLayer, wmsLayers);
   useDevTools();
 
-  // Memoized event handlers
+  // --- Handlers ---
+  const setStatePartial = (partial) => setState(prev => ({ ...prev, ...partial }));
+
   const showPaidFeatureMessage = useCallback(() => {
-    setShowMessage(true);
-    setTimeout(() => {
-      setShowMessage(false);
-    }, 5000);
+    setStatePartial({ showMessage: true });
+    setTimeout(() => setStatePartial({ showMessage: false }), 5000);
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!selectedLayer) {
+    if (!state.selectedLayer) {
       alert("Please select a WMS layer.");
       return;
     }
-
-    setIsLoading(true);
-    
+    setStatePartial({ isLoading: true });
     const filters = {
-      district: selectedDistrict,
-      tehsil: selectedTehsil,
-      village: selectedVillage,
-      khasra: selectedKhasra,
+      district: state.selectedDistrict,
+      tehsil: state.selectedTehsil,
+      village: state.selectedVillage,
+      khasra: state.selectedKhasra,
     };
-
-    const url = getFeatureInfoUrl1(selectedLayer, filters);
-
+    const url = getFeatureInfoUrl1(state.selectedLayer, filters);
     try {
       const response = await fetch(url);
-      
       if (response.ok) {
         const data = await response.json();
-
         if (data.features && data.features.length > 0) {
-          let newFeatureDetails = [];
-          let zoomBounds = null;
-          let validFeature = null;
-
-          const sourceProj = "EPSG:32643";
-          const targetProj = "EPSG:4326";
-
-          data.features.forEach((feature) => {
-            const properties = feature.properties;
-
-            if (
-              (selectedDistrict && properties.district !== selectedDistrict) ||
-              (selectedTehsil && properties.tehsil !== selectedTehsil) ||
-              (selectedVillage && properties.village !== selectedVillage) ||
-              (selectedKhasra && properties.khasra_no !== selectedKhasra)
-            ) {
-              return;
-            }
-
-            // Convert properties to feature details format
-            for (const [key, value] of Object.entries(properties)) {
-              const excludedProperties = [
-                "state_code", "distt_code", "teh_code", "block", "block_code", "lu_lc", "others", "remark", "u_id", "objectid_1"
-              ];
-
-              if (excludedProperties.includes(key)) continue;
-
-              const formattedKey =
-                key === "area_ac"
-                  ? "Area"
-                  : key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-              const displayValue = key === "area_ac" && !isNaN(value)
-                ? parseFloat(value).toFixed(2)
-                : value;
-
-              newFeatureDetails.push({
-                label: formattedKey,
-                value: displayValue
-              });
-            }
-
-            if (feature.geometry) {
-              validFeature = feature;
-
-              if (!zoomBounds) {
-                const transformedGeometry = L.geoJSON(feature.geometry, {
-                  coordsToLatLng: (coords) => {
-                    const [x, y] = proj4(sourceProj, targetProj, [coords[0], coords[1]]);
-                    return L.latLng(y, x);
-                  },
-                });
-
-                zoomBounds = transformedGeometry.getBounds();
-              }
-            }
-          });
-
-          setFeatureDetails(newFeatureDetails);
-          setShowFeaturePanel(true);
-          setShowFeatureButtons(true);
-
-          if (validFeature && validFeature.geometry) {
-            if (currentPolygonLayer.current) {
-              mapInstance.current.removeLayer(currentPolygonLayer.current);
-            }
-
-            const newPolygonLayer = L.geoJSON(validFeature.geometry, {
-              coordsToLatLng: (coords) => {
-                const [x, y] = proj4(sourceProj, targetProj, [coords[0], coords[1]]);
-                return L.latLng(y, x);
-              },
-            }).addTo(mapInstance.current);
-
-            currentPolygonLayer.current = newPolygonLayer;
-
-            mapInstance.current.fitBounds(zoomBounds, {
-              padding: [50, 50],
-              maxZoom: mapInstance.current.options.maxZoom,
+          const filtered = data.features.filter(f =>
+            (!filters.district || f.properties.district === filters.district) &&
+            (!filters.tehsil || f.properties.tehsil === filters.tehsil) &&
+            (!filters.village || f.properties.village === filters.village) &&
+            (!filters.khasra || f.properties.khasra_no === filters.khasra)
+          );
+          if (filtered.length > 0) {
+            const feature = filtered[0];
+            setStatePartial({
+              featureDetails: processFeatureProperties(feature.properties),
+              showFeaturePanel: true,
+              showFeatureButtons: true,
             });
+            if (feature.geometry) {
+              if (currentPolygonLayer.current) mapInstance.current.removeLayer(currentPolygonLayer.current);
+              const newPolygonLayer = createPolygonLayer(feature.geometry).addTo(mapInstance.current);
+              currentPolygonLayer.current = newPolygonLayer;
+              mapInstance.current.fitBounds(newPolygonLayer.getBounds(), { padding: MAP_PADDING, maxZoom: mapInstance.current.options.maxZoom });
+            }
+          } else {
+            setStatePartial({ featureDetails: [], showFeaturePanel: false, showFeatureButtons: false });
+            if (currentPolygonLayer.current) mapInstance.current.removeLayer(currentPolygonLayer.current);
           }
         } else {
-          setFeatureDetails([]);
-          setShowFeaturePanel(false);
-          setShowFeatureButtons(false);
-          if (currentPolygonLayer.current) {
-            mapInstance.current.removeLayer(currentPolygonLayer.current);
-          }
+          setStatePartial({ featureDetails: [], showFeaturePanel: false, showFeatureButtons: false });
+          if (currentPolygonLayer.current) mapInstance.current.removeLayer(currentPolygonLayer.current);
         }
       } else {
         console.error("Failed to fetch feature info:", response.status);
@@ -267,9 +157,9 @@ const MapComponent = () => {
     } catch (error) {
       console.error("Error fetching feature info:", error);
     } finally {
-      setIsLoading(false);
+      setStatePartial({ isLoading: false });
     }
-  }, [selectedLayer, selectedDistrict, selectedTehsil, selectedVillage, selectedKhasra]);
+  }, [state.selectedLayer, state.selectedDistrict, state.selectedTehsil, state.selectedVillage, state.selectedKhasra]);
 
   const handleMapClick = useCallback(async (event) => {
     const { lat, lng } = event.latlng;
@@ -294,47 +184,15 @@ const MapComponent = () => {
           const feature = data.features[0];
           const properties = feature.properties;
           const clickedKhasra = properties.khasra_no;
-          setSelectedKhasra(clickedKhasra);
+          setStatePartial({ selectedKhasra: clickedKhasra });
           
-          const excludedProperties = [
-            "state_code",
-            "distt_code",
-            "teh_code",
-            "block",
-            "block_code",
-            "lu_lc",
-            "others",
-            "remark",
-            "u_id",
-            "objectid_1",
-          ];
-          
-          let newFeatureDetails = [];
+          const newFeatureDetails = processFeatureProperties(properties);
 
-          for (const [key, value] of Object.entries(properties)) {
-            if (excludedProperties.includes(key)) continue;
-
-            const formattedKey =
-              key === "area_ac"
-                ? "Area"
-                : key
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (char) => char.toUpperCase());
-
-            const displayValue =
-              key === "area_ac" && !isNaN(value)
-                ? parseFloat(value).toFixed(2)
-                : value;
-
-            newFeatureDetails.push({
-              label: formattedKey,
-              value: displayValue
-            });
-          }
-
-          setFeatureDetails(newFeatureDetails);
-          setShowFeaturePanel(true);
-          setShowFeatureButtons(true);
+          setStatePartial({
+            featureDetails: newFeatureDetails,
+            showFeaturePanel: true,
+            showFeatureButtons: true,
+          });
 
           if (currentPolygonLayer.current) {
             mapInstance.current.removeLayer(currentPolygonLayer.current);
@@ -345,16 +203,9 @@ const MapComponent = () => {
 
           const bounds = newPolygonLayer.getBounds();
           mapInstance.current.fitBounds(bounds, {
-            padding: [50, 50],
+            padding: MAP_PADDING,
             maxZoom: mapInstance.current.options.maxZoom,
           });
-        } else {
-          setFeatureDetails([]);
-          setShowFeaturePanel(false);
-          setShowFeatureButtons(false);
-          if (currentPolygonLayer.current) {
-            mapInstance.current.removeLayer(currentPolygonLayer.current);
-          }
         }
       }
     } catch (error) {
@@ -363,7 +214,7 @@ const MapComponent = () => {
   }, [wmsLayers]);
 
   const handleLayerChange = useCallback((state) => {
-    setSelectedLayer(state);
+    setStatePartial({ selectedLayer: state });
     fetchWMSLayerData(state);
   }, []);
 
@@ -404,23 +255,29 @@ const MapComponent = () => {
             }
           }
 
-          setDistrictOptions([district]);
-          setTehsilOptions([tehsil]);
-          setVillageOptions(villages);
-          setSelectedDistrict(district);
-          setSelectedTehsil(tehsil);
+          setStatePartial({
+            districtOptions: [district],
+            tehsilOptions: [tehsil],
+            villageOptions: villages,
+            selectedDistrict: district,
+            selectedTehsil: tehsil,
+          });
 
           if (villages.length > 0) {
             const firstVillage = villages[0];
-            setVillageKhasraMap(villageKhasraMap);
-            setSelectedVillage(firstVillage);
+            setStatePartial({
+              villageKhasraMap,
+              selectedVillage: firstVillage,
+            });
 
             const sortedKhasra = villageKhasraMap[firstVillage]
               ? villageKhasraMap[firstVillage].sort((a, b) => parseInt(a) - parseInt(b))
               : [];
 
-            setKhasraOptions(sortedKhasra);
-            setSelectedKhasra(sortedKhasra.length > 0 ? sortedKhasra[0] : '');
+            setStatePartial({
+              khasraOptions: sortedKhasra,
+              selectedKhasra: sortedKhasra.length > 0 ? sortedKhasra[0] : '',
+            });
           }
         }
       } else {
@@ -433,59 +290,61 @@ const MapComponent = () => {
 
   const handleDistrictChange = useCallback((e) => {
     const selectedDistrict = e.target.value;
-    setSelectedDistrict(selectedDistrict);
+    setStatePartial({ selectedDistrict });
     fetchWMSLayerData(selectedDistrict);
   }, [fetchWMSLayerData]);
 
   const handleTehsilChange = useCallback((e) => {
     const selectedTehsil = e.target.value;
-    setSelectedTehsil(selectedTehsil);
+    setStatePartial({ selectedTehsil });
   }, []);
 
   const handleVillageChange = useCallback((e) => {
     const selectedVillage = e.target.value;
-    setSelectedVillage(selectedVillage);
+    setStatePartial({ selectedVillage });
 
-    const khasraNumbers = villageKhasraMap[selectedVillage] || [];
+    const khasraNumbers = state.villageKhasraMap[selectedVillage] || [];
     const sortedKhasraNumbers = khasraNumbers.sort((a, b) => parseInt(a) - parseInt(b));
 
-    setKhasraOptions(sortedKhasraNumbers);
-    setSelectedKhasra(sortedKhasraNumbers.length > 0 ? sortedKhasraNumbers[0] : '');
-  }, [villageKhasraMap]);
+    setStatePartial({
+      khasraOptions: sortedKhasraNumbers,
+      selectedKhasra: sortedKhasraNumbers.length > 0 ? sortedKhasraNumbers[0] : '',
+    });
+  }, [state.villageKhasraMap]);
 
   const handleKhasraChange = useCallback((event) => {
     const selectedKhasra = event.target.value;
-    setSelectedKhasra(selectedKhasra);
+    setStatePartial({ selectedKhasra });
   }, []);
 
   const handleOwnershipClick = useCallback(() => {
-    setShowPopup(true);
-    if (selectedKhasra) {
-      import('../Parsola.json')
+    setStatePartial({ showPopup: true });
+    if (state.selectedKhasra) {
+      import('./Parsola.json')
         .then((data) => {
-          setJsonData(data.features);
+          setStatePartial({ jsonData: data.features });
           const match = data.features.find(
-            (feature) => feature.properties["Khasra No"] === parseInt(selectedKhasra, 10)
+            (feature) => feature.properties["Khasra No"] === parseInt(state.selectedKhasra, 10)
           );
           if (match) {
             match.properties["Owner Name"] = match.properties[
               "Owner Name"
             ].replace("Map Report", "").trim();
           }
-          setMatchingFeature(match);
+          setStatePartial({ matchingFeature: match });
         })
         .catch((err) => console.error('Error loading JSON:', err));
     } else {
       alert('Please select a Khasra first.');
     }
-  }, [selectedKhasra]);
+  }, [state.selectedKhasra]);
 
   const handleFeedbackClick = useCallback(() => {
     window.open('https://forms.gle/LuWQMxrgU5cpakCq8', '_blank');
   }, []);
 
   const closePopup = useCallback(() => {
-    setShowPopup(false);
+    setStatePartial({ showPopup: false });
   }, []);
 
   return (
@@ -493,20 +352,20 @@ const MapComponent = () => {
       {/* Left Sidebar - Layer Selector */}
       <LayerSelector
         wmsLayers={wmsLayers}
-        selectedLayer={selectedLayer}
+        selectedLayer={state.selectedLayer}
         onLayerChange={(state) => {
           handleLayerChange(state);
-          setSelectedLayer(state);
+          setStatePartial({ selectedLayer: state });
           getLayerBoundingBox(state).then((bounds) => zoomToBounds(bounds, mapInstance));
         }}
-        selectedDistrict={selectedDistrict}
-        selectedTehsil={selectedTehsil}
-        selectedVillage={selectedVillage}
-        selectedKhasra={selectedKhasra}
-        districtOptions={districtOptions}
-        tehsilOptions={tehsilOptions}
-        villageOptions={villageOptions}
-        khasraOptions={khasraOptions}
+        selectedDistrict={state.selectedDistrict}
+        selectedTehsil={state.selectedTehsil}
+        selectedVillage={state.selectedVillage}
+        selectedKhasra={state.selectedKhasra}
+        districtOptions={state.districtOptions}
+        tehsilOptions={state.tehsilOptions}
+        villageOptions={state.villageOptions}
+        khasraOptions={state.khasraOptions}
         onDistrictChange={handleDistrictChange}
         onTehsilChange={handleTehsilChange}
         onVillageChange={handleVillageChange}
@@ -518,7 +377,7 @@ const MapComponent = () => {
       <div className="flex-1 h-screen overflow-auto ml-80 mr-80">
         <MapContainer
           onMapClick={handleMapClick}
-          selectedLayer={selectedLayer}
+          selectedLayer={state.selectedLayer}
           wmsLayers={wmsLayers}
           currentPolygonLayer={currentPolygonLayer}
           mapInstance={mapInstance}
@@ -527,24 +386,24 @@ const MapComponent = () => {
 
       {/* Right Sidebar - Feature Panel */}
       <FeaturePanel
-        featureDetails={featureDetails}
+        featureDetails={state.featureDetails}
         onVillageMapClick={showPaidFeatureMessage}
         onOwnershipClick={handleOwnershipClick}
         onFeedbackClick={handleFeedbackClick}
-        showFeaturePanel={showFeaturePanel}
-        showFeatureButtons={showFeatureButtons}
+        showFeaturePanel={state.showFeaturePanel}
+        showFeatureButtons={state.showFeatureButtons}
       />
 
       {/* Popups and Messages */}
       <OwnershipPopup
-        showPopup={showPopup}
+        showPopup={state.showPopup}
         onClose={closePopup}
-        matchingFeature={matchingFeature}
-        selectedKhasra={selectedKhasra}
+        matchingFeature={state.matchingFeature}
+        selectedKhasra={state.selectedKhasra}
       />
 
       {/* Loading Overlay */}
-      {isLoading && (
+      {state.isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-lg p-6 shadow-xl">
             <div className="flex items-center space-x-3">
@@ -556,7 +415,7 @@ const MapComponent = () => {
       )}
 
       {/* Paid Feature Message */}
-      {showMessage && (
+      {state.showMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg shadow-lg z-[9999]">
           <div className="flex items-center">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
