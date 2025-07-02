@@ -47,6 +47,18 @@ const validateOtp = (otp) => {
   return null;
 };
 
+const checkGmailExists = async (email) => {
+  // Example using open.kickbox.com (free, but not always reliable)
+  try {
+    const res = await fetch(`https://open.kickbox.com/v1/disposable/${email}`);
+    const data = await res.json();
+    // If not disposable and format is valid, assume it exists (not 100% accurate)
+    return data && data.disposable === false;
+  } catch {
+    return true; // If API fails, allow by default
+  }
+};
+
 function EmailVerification() {
   // --- State Management ---
   const [state, setState] = useState({
@@ -89,6 +101,15 @@ function EmailVerification() {
         errors: { email: emailError, phone: phoneError }
       });
       return;
+    }
+    // --- Gmail existence check ---
+    if (state.email.toLowerCase().endsWith('@gmail.com')) {
+      const exists = await checkGmailExists(state.email);
+      if (!exists) {
+        toast.warn('This Gmail address does not exist or is not valid.');
+        setStatePartial({ isLoading: false });
+        return;
+      }
     }
     try {
       await api.post(`http://otp.quantasip.com/send-otp`, { email: state.email, phone: state.phone });
