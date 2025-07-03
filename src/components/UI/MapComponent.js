@@ -38,7 +38,7 @@ const WMS_LAYER_CONFIG = {
 };
 const LAYER_NAMES = [
   "AndhraPradesh", "Chhattisgarh", "Goa", "Haryana", "Karnataka",
-  "MadhyaPradesh", "Maharashtra", "Rajasthan", "TamilNadu", "Telangana", "parsola"
+  "MadhyaPradesh", "Maharashtra", "Rajasthan", "TamilNadu", "Telangana"
 ];
 
 // --- Utility Functions ---

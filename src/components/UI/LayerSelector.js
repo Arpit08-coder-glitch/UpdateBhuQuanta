@@ -67,7 +67,12 @@ const LayerSelector = ({
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   )}
                 </div>
-                <span className="font-medium">{state}</span>
+                <span className="font-medium">
+                  {state === 'MadhyaPradesh' ? 'Madhya Pradesh' :
+                   state === 'AndhraPradesh' ? 'Andhra Pradesh' :
+                   state === 'TamilNadu' ? 'Tamil Nadu' :
+                   state}
+                </span>
               </label>
             ))}
           </div>
