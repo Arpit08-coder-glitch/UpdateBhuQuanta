@@ -74,7 +74,16 @@ function EmailVerification() {
   });
   const inputsRef = useRef([]);
   const navigate = useNavigate();
-  const { setIsEmailVerified } = useAuth();
+  const { isEmailVerified, setIsEmailVerified } = useAuth();
+
+  // Redirect to map if already authenticated
+  useEffect(() => {
+    console.log('EmailVerification: isEmailVerified =', isEmailVerified);
+    if (isEmailVerified) {
+      console.log('EmailVerification: Redirecting to /map');
+      navigate('/map');
+    }
+  }, [isEmailVerified, navigate]);
 
   // --- Utility State Updater ---
   const setStatePartial = (partial) => setState(prev => ({ ...prev, ...partial }));
@@ -208,9 +217,35 @@ function EmailVerification() {
   // --- UI/UX Logic ---
   const isButtonDisabled = !state.email || !state.phone;
 
+  // Debug function to check sessionStorage
+  const checkSessionStorage = () => {
+    console.log('=== DEBUG SESSION STORAGE ===');
+    console.log('sessionStorage.getItem("isEmailVerified") =', sessionStorage.getItem('isEmailVerified'));
+    console.log('isEmailVerified state =', isEmailVerified);
+    console.log('=============================');
+  };
+
   return (
     <>
       <ToastContainer {...TOAST_CONFIG} />
+      {/* Debug button - remove in production */}
+      <button 
+        onClick={checkSessionStorage}
+        style={{
+          position: 'fixed',
+          top: '10px',
+          left: '10px',
+          zIndex: 9999,
+          background: 'red',
+          color: 'white',
+          padding: '5px',
+          fontSize: '12px',
+          opacity: 0,
+          pointerEvents: 'auto'
+        }}
+      >
+        Debug Session
+      </button>
       {state.isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
           <div className="relative w-full max-w-md">

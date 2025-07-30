@@ -347,8 +347,34 @@ const MapComponent = () => {
     setStatePartial({ showPopup: false });
   }, []);
 
+  // Debug function to check sessionStorage
+  const checkSessionStorage = () => {
+    console.log('=== DEBUG SESSION STORAGE (MAP) ===');
+    console.log('sessionStorage.getItem("isEmailVerified") =', sessionStorage.getItem('isEmailVerified'));
+    console.log('=============================');
+  };
+
   return (
     <div className="h-screen w-screen flex overflow-hidden">
+      {/* Debug button - remove in production */}
+      <button 
+        onClick={checkSessionStorage}
+        style={{
+          position: 'fixed',
+          top: '10px',
+          left: '10px',
+          zIndex: 9999,
+          background: 'blue',
+          color: 'white',
+          padding: '5px',
+          fontSize: '12px',
+          opacity: 0,
+          pointerEvents: 'auto'
+        }}
+      >
+        Debug Session (Map)
+      </button>
+
       {/* Left Sidebar - Layer Selector */}
       <LayerSelector
         wmsLayers={wmsLayers}

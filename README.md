@@ -1,4 +1,23 @@
-# Getting Started with Create React App
+# QuantaSIP Map Application
+
+This project is a React-based web application for OTP-verified user authentication and map-based features. It uses React Context for authentication, React Router for routing, and Leaflet for map rendering.
+
+## Authentication System
+
+The application uses a session-based authentication system that:
+- Stores authentication state in sessionStorage
+- Keeps users logged in when they refresh the page
+- Automatically logs out users when they close the tab
+- Automatically redirects authenticated users to the map component
+
+### Authentication Flow
+1. Users enter their email and phone number
+2. OTP is sent to their phone number
+3. Upon successful OTP verification, users are redirected to the map
+4. Authentication state is persisted in sessionStorage
+5. Users remain logged in on page refresh but are logged out when the tab is closed
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
