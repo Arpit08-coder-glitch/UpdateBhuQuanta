@@ -112,7 +112,7 @@ function EmailVerification() {
       }
     }
     try {
-      await api.post(`http://otp.quantasip.com/send-otp`, { email: state.email, phone: state.phone });
+      await api.post(`http://localhost:5006/send-otp`, { email: state.email, phone: state.phone });
       toast.success('OTP sent successfully to your phone!');
       setStatePartial({ step: 2 });
     } catch (error) {
@@ -151,7 +151,7 @@ function EmailVerification() {
           toast.error('Invalid OTP. Please try again.');
         }
       } else {
-        await api.post(`http://otp.quantasip.com/verify-otp`, { email: state.email, otp: otpValue });
+        await api.post(`http://localhost:5006/verify-otp`, { email: state.email, otp: otpValue });
         toast.success('OTP verified successfully!');
         setIsEmailVerified(true);
         navigate('/map');
@@ -187,7 +187,7 @@ function EmailVerification() {
         await simulateSmsSending(state.phone, generatedOtp);
         toast.success(`New test OTP sent to your phone!`);
       } else {
-        await api.post(`http://otp.quantasip.com/send-otp`, { email: state.email, phone: state.phone });
+        await api.post(`http://localhost:5006/send-otp`, { email: state.email, phone: state.phone });
         toast.success('New OTP sent successfully to your phone!');
       }
     } catch (error) {
