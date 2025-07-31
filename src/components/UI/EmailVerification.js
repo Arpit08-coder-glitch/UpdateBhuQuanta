@@ -25,10 +25,6 @@ const TOAST_CONFIG = {
   pauseOnHover: true,
   theme: "light"
 };
-const ANIMATION_DURATIONS = {
-  SMS_SIMULATION: 2000,
-  EMAIL_SIMULATION: 1000
-};
 
 // --- Utility Functions ---
 const validateEmail = (email) => {
@@ -65,12 +61,11 @@ function EmailVerification() {
     isModalOpen: true,
     isLoading: false,
     step: 1,
-    mockOtp: '',
-    smsSent: false,
-    emailSent: false,
     email: '',
     phone: '',
     errors: {},
+    otpTimer: 0, // Timer in seconds
+    isOtpExpired: false,
   });
   const inputsRef = useRef([]);
   const navigate = useNavigate();
@@ -85,18 +80,27 @@ function EmailVerification() {
     }
   }, [isEmailVerified, navigate]);
 
+  // Timer effect for OTP countdown
+  useEffect(() => {
+    let interval;
+    if (state.step === 2 && state.otpTimer > 0) {
+      interval = setInterval(() => {
+        setState(prev => {
+          const newTimer = prev.otpTimer - 1;
+          if (newTimer <= 0) {
+            return { ...prev, otpTimer: 0, isOtpExpired: true };
+          }
+          return { ...prev, otpTimer: newTimer };
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [state.step, state.otpTimer]);
+
   // --- Utility State Updater ---
   const setStatePartial = (partial) => setState(prev => ({ ...prev, ...partial }));
-
-  // --- Simulate SMS/Email Sending ---
-  const simulateSmsSending = useCallback(async (phone, otp) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setStatePartial({ smsSent: true });
-        resolve();
-      }, ANIMATION_DURATIONS.SMS_SIMULATION);
-    });
-  }, []);
 
   // --- Form Handlers ---
   const handleEmailSubmit = async (e) => {
@@ -122,19 +126,11 @@ function EmailVerification() {
     }
     try {
       await api.post(`http://localhost:5006/send-otp`, { email: state.email, phone: state.phone });
-      toast.success('OTP sent successfully to your phone!');
-      setStatePartial({ step: 2 });
+      toast.success('OTP sent successfully to your email!');
+      setStatePartial({ step: 2, otpTimer: 300, isOtpExpired: false }); // 5 minutes timer
     } catch (error) {
-      if (error.response?.status === 500 || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
-        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        setStatePartial({ mockOtp: generatedOtp });
-        await simulateSmsSending(state.phone, generatedOtp);
-        toast.success(<span>Test OTP sent to your phone!<br /><b>OTP: {generatedOtp}</b></span>);
-        setStatePartial({ step: 2 });
-      } else {
-        const errorMsg = error.response?.data?.error || 'Failed to send OTP. Please try again.';
-        toast.error(errorMsg);
-      }
+      const errorMsg = error.response?.data?.error || 'Failed to send OTP. Please try again.';
+      toast.error(errorMsg);
     } finally {
       setStatePartial({ isLoading: false });
     }
@@ -143,6 +139,14 @@ function EmailVerification() {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setStatePartial({ isLoading: true, errors: {} });
+    
+    // Check if OTP is expired
+    if (state.isOtpExpired) {
+      toast.error('OTP has expired. Please resend.');
+      setStatePartial({ isLoading: false });
+      return;
+    }
+    
     const otpValue = inputsRef.current.map((input) => input.value).join('');
     const otpError = validateOtp(otpValue);
     if (otpError) {
@@ -151,20 +155,10 @@ function EmailVerification() {
       return;
     }
     try {
-      if (state.mockOtp) {
-        if (otpValue === state.mockOtp) {
-          toast.success('OTP verified successfully!');
-          setIsEmailVerified(true);
-          navigate('/map');
-        } else {
-          toast.error('Invalid OTP. Please try again.');
-        }
-      } else {
-        await api.post(`http://localhost:5006/verify-otp`, { email: state.email, otp: otpValue });
-        toast.success('OTP verified successfully!');
-        setIsEmailVerified(true);
-        navigate('/map');
-      }
+      await api.post(`http://localhost:5006/verify-otp`, { email: state.email, otp: otpValue });
+      toast.success('OTP verified successfully!');
+      setIsEmailVerified(true);
+      navigate('/map');
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Invalid OTP. Please try again.';
       toast.error(errorMsg);
@@ -182,33 +176,19 @@ function EmailVerification() {
   };
 
   const goBackToStep1 = () => {
-    setStatePartial({ step: 1, mockOtp: '', smsSent: false, errors: {} });
+    setStatePartial({ step: 1, errors: {}, otpTimer: 0, isOtpExpired: false });
     inputsRef.current.forEach((input) => (input.value = ''));
   };
 
   const handleResendOtp = async () => {
-    setStatePartial({ isLoading: true, smsSent: false });
+    setStatePartial({ isLoading: true });
     try {
-      if (state.mockOtp) {
-        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        setStatePartial({ mockOtp: generatedOtp });
-        toast.info(`Resending test OTP to your phone...`);
-        await simulateSmsSending(state.phone, generatedOtp);
-        toast.success(`New test OTP sent to your phone!`);
-      } else {
-        await api.post(`http://localhost:5006/send-otp`, { email: state.email, phone: state.phone });
-        toast.success('New OTP sent successfully to your phone!');
-      }
+      await api.post(`http://localhost:5006/send-otp`, { email: state.email, phone: state.phone });
+      setStatePartial({ otpTimer: 300, isOtpExpired: false }); // Reset timer
+      toast.success('New OTP sent successfully to your email!');
     } catch (error) {
-      if (error.response?.status === 500 || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
-        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        setStatePartial({ mockOtp: generatedOtp });
-        toast.info(`API server is down. Resending test OTP to your phone...`);
-        await simulateSmsSending(state.phone, generatedOtp);
-        toast.success(`New test OTP sent to your phone!`);
-      } else {
-        toast.error('Failed to resend OTP. Please try again.');
-      }
+      const errorMsg = error.response?.data?.error || 'Failed to resend OTP. Please try again.';
+      toast.error(errorMsg);
     } finally {
       setStatePartial({ isLoading: false });
     }
@@ -216,6 +196,13 @@ function EmailVerification() {
 
   // --- UI/UX Logic ---
   const isButtonDisabled = !state.email || !state.phone;
+
+  // Format timer display
+  const formatTimer = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   // Debug function to check sessionStorage
   const checkSessionStorage = () => {
@@ -351,22 +338,26 @@ function EmailVerification() {
                   <form onSubmit={handleOtpSubmit} className="space-y-6">
                     <div className="text-center">
                       <p className="text-sm text-gray-600 mb-6">
-                        We've sent a 6-digit verification code to <span className="font-medium text-gray-900">{state.phone}</span>
+                        We've sent a 6-digit verification code to <span className="font-medium text-gray-900">{state.email}</span>
                       </p>
-                      {state.mockOtp && (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-sm text-yellow-800">
-                            <strong>Test Mode:</strong> API server is down. OTP sent to your phone.
+                      {/* Timer Display */}
+                      {state.otpTimer > 0 && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-800 flex items-center justify-center">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            OTP expires in: <span className="font-bold ml-1">{formatTimer(state.otpTimer)}</span>
                           </p>
                         </div>
                       )}
-                      {state.smsSent && (
-                        <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 flex items-center">
+                      {state.isOtpExpired && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-sm text-red-800 flex items-center justify-center">
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            SMS sent successfully
+                            OTP has expired. Please resend.
                           </p>
                         </div>
                       )}
@@ -413,10 +404,13 @@ function EmailVerification() {
                       <button
                         type="button"
                         onClick={handleResendOtp}
-                        disabled={state.isLoading}
+                        disabled={state.isLoading || (state.otpTimer > 0 && !state.isOtpExpired)}
                         className="text-sm text-blue-600 hover:text-blue-800 underline disabled:text-gray-400 disabled:no-underline"
                       >
-                        {state.isLoading ? 'Sending...' : 'Resend OTP'}
+                        {state.isLoading ? 'Sending...' : 
+                         state.otpTimer > 0 && !state.isOtpExpired ? 
+                         `Resend OTP (${formatTimer(state.otpTimer)})` : 
+                         'Resend OTP'}
                       </button>
                     </div>
                   </form>
