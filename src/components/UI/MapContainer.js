@@ -17,6 +17,14 @@ const MapContainer = ({
       onMapClick(event);
     }
   }, [onMapClick]);
+  const formatLayerName = (layer) => {
+    const nameMap = {
+      AndhraPradesh: 'Andhra Pradesh',
+      MadhyaPradesh: 'Madhya Pradesh',
+      TamilNadu: 'Tamil Nadu',
+    };
+    return nameMap[layer] || layer;
+  };
   useEffect(() => {
     // Check if map already exists to prevent re-initialization
     if (mapInstance.current) {
@@ -107,18 +115,20 @@ const MapContainer = ({
       />
       
       {/* Map Overlay Controls */}
-      <div className="absolute top-4 right-4 z-[1000] space-y-2">
-        {/* Active Layer Status (translucent background) */}
-        {selectedLayer && (
-          <div className="bg-white/70 rounded-lg shadow-lg p-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-700">Selected State</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">{selectedLayer}</p>
-          </div>
-        )}
+<div className="absolute top-4 right-4 z-[1000] space-y-2">
+  {/* Active Layer Status (translucent background) */}
+  {selectedLayer && (
+    <div className="bg-white/70 rounded-lg shadow-lg p-3">
+      <div className="flex items-center space-x-2">
+        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        <span className="text-sm font-medium text-gray-700">Selected State</span>
       </div>
+      <p className="text-xs text-gray-500 mt-1">
+        {formatLayerName(selectedLayer)}
+      </p>
+    </div>
+  )}
+</div>
 
       {/* Loading Indicator */}
       <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[999] hidden" id="map-loading">
