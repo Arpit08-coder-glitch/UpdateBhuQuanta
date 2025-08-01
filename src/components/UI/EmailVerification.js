@@ -139,14 +139,13 @@ function EmailVerification() {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setStatePartial({ isLoading: true, errors: {} });
-    
-    // Check if OTP is expired
+  
     if (state.isOtpExpired) {
       toast.error('OTP has expired. Please resend.');
       setStatePartial({ isLoading: false });
       return;
     }
-    
+  
     const otpValue = inputsRef.current.map((input) => input.value).join('');
     const otpError = validateOtp(otpValue);
     if (otpError) {
@@ -154,6 +153,7 @@ function EmailVerification() {
       toast.error(otpError);
       return;
     }
+  
     try {
       await api.post(`http://localhost:5006/verify-otp`, { email: state.email, otp: otpValue });
       toast.success('OTP verified successfully!');
@@ -161,12 +161,20 @@ function EmailVerification() {
       navigate('/map');
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Invalid OTP. Please try again.';
+  
+      // Clear OTP inputs (optional)
+      inputsRef.current.forEach(input => (input.value = ''));
+  
+      // Focus first OTP input (optional)
+      if (inputsRef.current[0]) inputsRef.current[0].focus();
+  
+      setStatePartial({ isLoading: false, errors: { otp: errorMsg } });
+  
+      // Show toast
       toast.error(errorMsg);
-    } finally {
-      setStatePartial({ isLoading: false });
     }
   };
-
+  
   const handleOtpChange = (index, e) => {
     const value = e.target.value;
     if (!/^\d$/.test(value) && value !== '') return;
@@ -315,6 +323,9 @@ function EmailVerification() {
                         />
                         {state.errors.phone && <p className="text-red-500 text-xs mt-1">{state.errors.phone}</p>}
                       </div>
+                      {state.errors.otp && (
+  <p className="text-center text-red-500 text-sm mt-2">{state.errors.otp}</p>
+)}
                     </div>
                     <button
                       type="submit"
