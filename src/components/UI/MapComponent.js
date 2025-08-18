@@ -26,7 +26,6 @@ import {
 const EXCLUDED_PROPERTIES = [
   "state_code", "distt_code", "teh_code", "block", "block_code", "lu_lc", "others", "remark", "u_id", "objectid_1"
 ];
-const SOURCE_PROJ = "EPSG:32643";
 const TARGET_PROJ = "EPSG:4326";
 const MAP_PADDING = [50, 50];
 const WMS_LAYER_CONFIG = {
@@ -41,6 +40,23 @@ const LAYER_NAMES = [
   "MadhyaPradesh", "Maharashtra", "Rajasthan", "TamilNadu", "Telangana"
 ];
 
+// ✅ Projection per state
+const STATE_PROJECTIONS = {
+  Haryana: "EPSG:32644",
+  Chhattisgarh: "EPSG:32644", // some eastern parts may require 45
+  Maharashtra: "EPSG:32643",
+  MadhyaPradesh: "EPSG:32643",
+  Rajasthan: "EPSG:32643",
+  Telangana: "EPSG:32643",
+  AndhraPradesh: "EPSG:32643",
+  TamilNadu: "EPSG:32643",
+  Karnataka: "EPSG:32643",
+  Goa: "EPSG:32643",
+};
+
+const getSourceProjection = (layerName) =>
+  STATE_PROJECTIONS[layerName] || TARGET_PROJ;
+
 // --- Utility Functions ---
 const processFeatureProperties = (properties) => {
   return Object.entries(properties)
@@ -50,9 +66,10 @@ const processFeatureProperties = (properties) => {
       value: key === "area_ac" && !isNaN(value) ? parseFloat(value).toFixed(2) : value
     }));
 };
-const createPolygonLayer = (geometry) => L.geoJSON(geometry, {
+
+const createPolygonLayer = (geometry, layerName) => L.geoJSON(geometry, {
   coordsToLatLng: (coords) => {
-    const [x, y] = proj4(SOURCE_PROJ, TARGET_PROJ, [coords[0], coords[1]]);
+    const [x, y] = proj4(getSourceProjection(layerName), TARGET_PROJ, [coords[0], coords[1]]);
     return L.latLng(y, x);
   },
 });
@@ -139,7 +156,7 @@ const MapComponent = () => {
             });
             if (feature.geometry) {
               if (currentPolygonLayer.current) mapInstance.current.removeLayer(currentPolygonLayer.current);
-              const newPolygonLayer = createPolygonLayer(feature.geometry).addTo(mapInstance.current);
+              const newPolygonLayer = createPolygonLayer(feature.geometry, state.selectedLayer).addTo(mapInstance.current);
               currentPolygonLayer.current = newPolygonLayer;
               mapInstance.current.fitBounds(newPolygonLayer.getBounds(), { padding: MAP_PADDING, maxZoom: mapInstance.current.options.maxZoom });
             }
@@ -198,7 +215,7 @@ const MapComponent = () => {
             mapInstance.current.removeLayer(currentPolygonLayer.current);
           }
 
-          const newPolygonLayer = L.geoJSON(feature.geometry).addTo(mapInstance.current);
+          const newPolygonLayer = createPolygonLayer(feature.geometry, activeLayer).addTo(mapInstance.current);
           currentPolygonLayer.current = newPolygonLayer;
 
           const bounds = newPolygonLayer.getBounds();
@@ -455,4 +472,4 @@ const MapComponent = () => {
   );
 };
 
-export default MapComponent; 
+export default MapComponent;
