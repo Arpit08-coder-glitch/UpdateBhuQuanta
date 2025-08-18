@@ -26,6 +26,7 @@ import {
 const EXCLUDED_PROPERTIES = [
   "state_code", "distt_code", "teh_code", "block", "block_code", "lu_lc", "others", "remark", "u_id", "objectid_1"
 ];
+const SOURCE_PROJ = "EPSG:32643";
 const TARGET_PROJ = "EPSG:4326";
 const MAP_PADDING = [50, 50];
 const WMS_LAYER_CONFIG = {
@@ -39,7 +40,6 @@ const LAYER_NAMES = [
   "AndhraPradesh", "Chhattisgarh", "Goa", "Haryana", "Karnataka",
   "MadhyaPradesh", "Maharashtra", "Rajasthan", "TamilNadu", "Telangana"
 ];
-
 // ✅ Projection per state
 const STATE_PROJECTIONS = {
   Haryana: "EPSG:32644",
@@ -215,7 +215,7 @@ const MapComponent = () => {
             mapInstance.current.removeLayer(currentPolygonLayer.current);
           }
 
-          const newPolygonLayer = createPolygonLayer(feature.geometry, activeLayer).addTo(mapInstance.current);
+          const newPolygonLayer = L.geoJSON(feature.geometry).addTo(mapInstance.current);
           currentPolygonLayer.current = newPolygonLayer;
 
           const bounds = newPolygonLayer.getBounds();
@@ -472,4 +472,4 @@ const MapComponent = () => {
   );
 };
 
-export default MapComponent;
+export default MapComponent; 
