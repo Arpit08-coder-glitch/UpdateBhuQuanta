@@ -20,12 +20,7 @@ body {
 .btn-primary:hover {
   background-color: #0056b3;
 }
-.khasra-label {
-  pointer-events: none;
-  font-weight: bold;
-  color: #222;
-  text-shadow: 1px 1px 2px #fff, 0 0 2px #fff;
-}
+
 .btn-submit {
   display: block;
   width: 100%;

@@ -75,7 +75,6 @@ const createPolygonLayer = (geometry, layerName) => L.geoJSON(geometry, {
 });
 
 const MapComponent = () => {
-  const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const currentPolygonLayer = useRef(null);
   const [state, setState] = useState({
