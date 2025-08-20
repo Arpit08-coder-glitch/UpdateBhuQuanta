@@ -106,7 +106,6 @@ const MapComponent = () => {
       layers[name] = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         ...WMS_LAYER_CONFIG,
         layers: `ne:${name}`,
-        TILED: false,
       });
     });
     return layers;
